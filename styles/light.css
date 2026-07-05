@@ -92,21 +92,21 @@ CHAT INPUT
 ========================== */
 
 [data-testid="stBottomBlockContainer"]{
-    background:#FFFFFF !important;
+    background:#c6c6c6 !important;
 }
 
 [data-testid="stChatInput"]{
-    background:#FFFFFF !important;
+    background:#c6c6c6 !important;
     border:1px solid #E5E7EB;
     border-radius:15px;
 }
 
 [data-testid="stChatInput"]>div{
-    background:#FFFFFF !important;
+    background:#c6c6c6 !important;
 }
 
 [data-testid="stChatInput"] textarea{
-    background:#FFFFFF !important;
+    background:#c6c6c6 !important;
     color:#111827 !important;
 }
 
