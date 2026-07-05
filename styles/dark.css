@@ -1,57 +1,63 @@
-/* ==========================================
-   GENERAL
-========================================== */
+/* ==========================
+ROOT
+========================== */
 
-.stApp{
-    background:#0E1117;
-    color:#F8FAFC;
-}
-
+html,
+body,
+.stApp,
+[data-testid="stAppViewContainer"],
+[data-testid="stAppViewContainer"]>.main,
 .main,
 .block-container{
-    background:#0E1117;
-}
-
-header[data-testid="stHeader"]{
-    background:#0E1117;
-    border-bottom:1px solid #1F2937;
-}
-
-section[data-testid="stSidebar"]{
-    background:#111827;
-    border-right:1px solid #374151;
-}
-
-section[data-testid="stSidebar"] *{
+    background:#0E1117 !important;
     color:#F8FAFC !important;
 }
 
-/* ==========================================
-   TEXT
-========================================== */
+
+/* ==========================
+HEADER
+========================== */
+
+header,
+[data-testid="stHeader"]{
+    background:#0E1117 !important;
+}
+
+
+/* ==========================
+SIDEBAR
+========================== */
+
+[data-testid="stSidebar"]{
+    background:#111827 !important;
+    border-right:1px solid #374151;
+}
+
+
+/* ==========================
+TEXT
+========================== */
 
 h1,h2,h3,h4,h5,h6,
 p,
 span,
 label,
-div,
-li,
-strong{
+div{
     color:#F8FAFC;
 }
 
-/* ==========================================
-   BUTTONS
-========================================== */
+
+/* ==========================
+BUTTONS
+========================== */
 
 .stButton>button{
     width:100%;
     background:#16A34A;
     color:white;
     border:none;
-    border-radius:12px;
+    border-radius:10px;
     padding:10px;
-    font-weight:600;
     transition:.25s;
 }
 
@@ -59,14 +65,15 @@ strong{
     background:#15803D;
 }
 
-/* ==========================================
-   CHAT MESSAGE
-========================================== */
+
+/* ==========================
+CHAT
+========================== */
 
 [data-testid="stChatMessage"]{
-    border-radius:16px;
-    padding:18px;
-    margin-bottom:18px;
+    border-radius:15px;
+    padding:15px;
+    margin-bottom:15px;
 }
 
 [data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-user"]){
@@ -79,12 +86,13 @@ strong{
     border-left:5px solid #64748B;
 }
 
-/* ==========================================
-   CHAT INPUT
-========================================== */
 
-section[data-testid="stBottomBlockContainer"]{
-    background:#0E1117;
+/* ==========================
+CHAT INPUT
+========================== */
+
+[data-testid="stBottomBlockContainer"]{
+    background:#0E1117 !important;
 }
 
 [data-testid="stChatInput"]{
@@ -93,38 +101,41 @@ section[data-testid="stBottomBlockContainer"]{
     border-radius:15px;
 }
 
+[data-testid="stChatInput"]>div{
+    background:#1F2937 !important;
+}
+
 [data-testid="stChatInput"] textarea{
     background:#1F2937 !important;
     color:white !important;
-}
-
-[data-testid="stChatInput"] textarea::placeholder{
-    color:#9CA3AF !important;
 }
 
 [data-testid="stChatInput"] button{
     background:#16A34A !important;
 }
 
-/* ==========================================
-   INFO BOX
-========================================== */
+
+/* ==========================
+INFO BOX
+========================== */
 
 .stAlert{
-    border-radius:12px;
+    border-radius:10px;
 }
 
-/* ==========================================
-   TOGGLE
-========================================== */
 
-.stToggle label{
-    color:white;
+/* ==========================
+HR
+========================== */
+
+hr{
+    border-color:#374151;
 }
 
-/* ==========================================
-   SCROLLBAR
-========================================== */
+
+/* ==========================
+SCROLLBAR
+========================== */
 
 ::-webkit-scrollbar{
     width:8px;
@@ -135,13 +146,14 @@ section[data-testid="stBottomBlockContainer"]{
     border-radius:20px;
 }
 
-/* ==========================================
-   ANIMATION
-========================================== */
+
+/* ==========================
+ANIMATION
+========================== */
 
 *{
     transition:
-        background-color .25s,
-        color .25s,
-        border-color .25s;
+    background-color .25s,
+    color .25s,
+    border-color .25s;
 }
