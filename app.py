@@ -1,11 +1,18 @@
+import os
 import streamlit as st
-from rag import ask_gemini
-from prompt import NOTE_PROMPT
+
+from rag import ask_gemini, build_rag
+from prompt import (
+    NOTE_PROMPT,
+    SUMMARY_PROMPT,
+    QUIZ_PROMPT
+)
+
 from ui_helpers import load_css
 
-# ---------------------------------
-# Page Configuration
-# ---------------------------------
+# ----------------------------------------------------
+# PAGE CONFIG
+# ----------------------------------------------------
 
 st.set_page_config(
     page_title="AI Academic Tutor",
@@ -13,9 +20,9 @@ st.set_page_config(
     layout="wide"
 )
 
-# ---------------------------------
-# Session State
-# ---------------------------------
+# ----------------------------------------------------
+# SESSION STATE
+# ----------------------------------------------------
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
@@ -23,12 +30,20 @@ if "messages" not in st.session_state:
 if "theme" not in st.session_state:
     st.session_state.theme = "dark"
 
-# Load CSS according to current theme
+if "pdf_ready" not in st.session_state:
+    st.session_state.pdf_ready = False
+
+if "current_pdf" not in st.session_state:
+    st.session_state.current_pdf = None
+
+if "last_answer" not in st.session_state:
+    st.session_state.last_answer = ""
+
 load_css(st.session_state.theme)
 
-# ---------------------------------
-# Sidebar
-# ---------------------------------
+# ----------------------------------------------------
+# SIDEBAR
+# ----------------------------------------------------
 
 with st.sidebar:
 
@@ -36,18 +51,47 @@ with st.sidebar:
 
     st.markdown("---")
 
-    st.markdown("### 🤖 Powered By")
+    st.markdown("## 📂 Upload PDF")
 
-    st.success("Google Gemini")
-    st.success("Retrieval Augmented Generation (RAG)")
-    st.success("FAISS Vector Database")
-    st.success("LangChain")
+    uploaded_pdf = st.file_uploader(
+        "Choose a PDF",
+        type=["pdf"]
+    )
+
+    if uploaded_pdf is not None:
+
+        os.makedirs("data", exist_ok=True)
+
+        save_path = os.path.join(
+            "data",
+            uploaded_pdf.name
+        )
+
+        with open(save_path, "wb") as f:
+            f.write(uploaded_pdf.getbuffer())
+
+        if st.session_state.current_pdf != uploaded_pdf.name:
+
+            with st.spinner("Creating Vector Database..."):
+
+                build_rag(save_path)
+
+            st.session_state.pdf_ready = True
+            st.session_state.current_pdf = uploaded_pdf.name
+
+            st.success("PDF Indexed Successfully!")
 
     st.markdown("---")
 
-    st.markdown("### 📄 Current Document")
+    st.markdown("### 📄 Current PDF")
 
-    st.info("computer_network.pdf")
+    if st.session_state.current_pdf:
+
+        st.success(st.session_state.current_pdf)
+
+    else:
+
+        st.warning("No PDF Uploaded")
 
     st.markdown("---")
 
@@ -58,19 +102,28 @@ with st.sidebar:
         value=(st.session_state.theme == "light")
     )
 
-    if light_mode:
-        st.session_state.theme = "light"
-    else:
-        st.session_state.theme = "dark"
+    new_theme = "light" if light_mode else "dark"
 
-    # Reload CSS after changing theme
-    load_css(st.session_state.theme)
+    if new_theme != st.session_state.theme:
+
+        st.session_state.theme = new_theme
+        st.rerun()
+
+    st.markdown("---")
+
+    st.markdown("### 🤖 Technology")
+
+    st.success("Google Gemini")
+    st.success("RAG")
+    st.success("FAISS")
+    st.success("LangChain")
 
     st.markdown("---")
 
     if st.button("🗑 Clear Conversation"):
 
         st.session_state.messages = []
+        st.session_state.last_answer = ""
 
         st.rerun()
 
@@ -78,44 +131,52 @@ with st.sidebar:
 
     st.caption("Made with ❤️ using Streamlit + Gemini")
 
-# ---------------------------------
-# Main Page
-# ---------------------------------
+# ----------------------------------------------------
+# MAIN PAGE
+# ----------------------------------------------------
 
 st.title("📚 AI Academic Tutor")
 
-st.caption("Ask questions from your PDF using RAG + Gemini")
+st.caption(
+    "Upload your study material and chat with it."
+)
 
 st.markdown("---")
 
-# ---------------------------------
-# Welcome Message
-# ---------------------------------
+# ----------------------------------------------------
+# WELCOME SCREEN
+# ----------------------------------------------------
+
+if not st.session_state.pdf_ready:
+
+    st.info("👈 Upload a PDF from the sidebar to begin.")
+
+    st.stop()
 
 if len(st.session_state.messages) == 0:
 
     with st.chat_message("assistant"):
+
         st.markdown(
             """
-Hello 👋
+# 👋 Welcome!
 
-I'm your **AI Academic Tutor**.
+I'm your AI Academic Tutor.
 
-I can answer questions from your uploaded Computer Network PDF.
+After uploading a PDF I can help you with:
 
-### 💡 Try asking:
+- 📚 Explain Concepts
+- 📝 Summarize Chapters
+- 🧠 Generate MCQs
+- 📖 Create Revision Notes
+- 💡 Answer Questions
 
-- What is Computer Network?
-- Explain LAN.
-- Difference between Hub and Switch.
-- Explain OSI Model.
-- What is TCP/IP?
+Start by asking any question below.
 """
         )
-
-# ---------------------------------
-# Display Chat History
-# ---------------------------------
+# ----------------------------------------------------
+# DISPLAY CHAT HISTORY
+# ----------------------------------------------------
 
 for message in st.session_state.messages:
 
@@ -123,15 +184,19 @@ for message in st.session_state.messages:
 
         st.markdown(message["content"])
 
-# ---------------------------------
-# Chat Input
-# ---------------------------------
+# ----------------------------------------------------
+# CHAT INPUT
+# ----------------------------------------------------
 
-question = st.chat_input("Ask anything about Computer Networks...")
+question = st.chat_input(
+    "Ask anything about your uploaded PDF..."
+)
 
 if question:
 
-    # Save User Message
+    # -----------------------------
+    # User Message
+    # -----------------------------
 
     st.session_state.messages.append(
         {
@@ -144,7 +209,9 @@ if question:
 
         st.markdown(question)
 
-    # AI Response
+    # -----------------------------
+    # Assistant Response
+    # -----------------------------
 
     with st.chat_message("assistant"):
 
@@ -154,7 +221,9 @@ if question:
 
         st.markdown(answer)
 
-    # Save AI Message
+    # Save Answer
+
+    st.session_state.last_answer = answer
 
     st.session_state.messages.append(
         {
@@ -162,3 +231,102 @@ if question:
             "content": answer
         }
     )
+
+# ----------------------------------------------------
+# EXTRA AI FEATURES
+# ----------------------------------------------------
+
+if st.session_state.last_answer != "":
+
+    st.markdown("---")
+
+    st.subheader("✨ AI Learning Tools")
+
+    col1, col2, col3 = st.columns(3)
+
+    # ============================================
+    # Generate Notes
+    # ============================================
+
+    with col1:
+
+        if st.button("📚 Generate Notes"):
+
+            with st.spinner("Generating Notes..."):
+
+                notes_prompt = NOTE_PROMPT.format(
+                    context=st.session_state.last_answer
+                )
+
+                notes = ask_gemini(notes_prompt)
+
+            st.markdown("### 📚 Revision Notes")
+
+            st.success(notes)
+
+    # ============================================
+    # Summary
+    # ============================================
+
+    with col2:
+
+        if st.button("📝 Summarize Chapter"):
+
+            with st.spinner("Summarizing..."):
+
+                summary_prompt = SUMMARY_PROMPT.format(
+                    context=st.session_state.last_answer
+                )
+
+                summary = ask_gemini(summary_prompt)
+
+            st.markdown("### 📝 Summary")
+
+            st.info(summary)
+
+    # ============================================
+    # Quiz
+    # ============================================
+
+    with col3:
+
+        if st.button("🧠 Quiz Me"):
+
+            with st.spinner("Creating Quiz..."):
+
+                quiz_prompt = QUIZ_PROMPT.format(
+                    context=st.session_state.last_answer
+                )
+
+                quiz = ask_gemini(quiz_prompt)
+
+            st.markdown("### 🧠 Quiz")
+
+            st.warning(quiz)
+
+# ----------------------------------------------------
+# DOWNLOAD ANSWER
+# ----------------------------------------------------
+
+if st.session_state.last_answer != "":
+
+    st.download_button(
+
+        label="⬇ Download Last Answer",
+
+        data=st.session_state.last_answer,
+
+        file_name="answer.txt",
+
+        mime="text/plain"
+    )
+
+# ----------------------------------------------------
+# FOOTER
+# ----------------------------------------------------
+
+st.markdown("---")
+
+st.caption(
+    "🚀 AI Academic Tutor | Built with Streamlit, Gemini & RAG"
+)

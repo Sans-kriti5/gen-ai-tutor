@@ -1,0 +1,120 @@
+/* ===========================
+GENERAL
+=========================== */
+
+.stApp{
+    background:#0E1117;
+    color:#F8FAFC;
+}
+
+section[data-testid="stSidebar"]{
+    background:#111827;
+    border-right:1px solid #374151;
+}
+
+h1,h2,h3,h4,h5,h6,
+p,label,span{
+    color:#F8FAFC;
+}
+
+/* ===========================
+BUTTONS
+=========================== */
+
+.stButton>button{
+    width:100%;
+    background:#16A34A;
+    color:white;
+    border:none;
+    border-radius:10px;
+    padding:10px;
+    transition:.3s;
+}
+
+.stButton>button:hover{
+    background:#15803D;
+}
+
+/* ===========================
+CHAT MESSAGE
+=========================== */
+
+[data-testid="stChatMessage"]{
+    border-radius:15px;
+    padding:15px;
+    margin-bottom:15px;
+}
+
+[data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-user"]){
+    background:#143D21;
+    border-left:5px solid #22C55E;
+}
+
+[data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-assistant"]){
+    background:#1E293B;
+    border-left:5px solid #64748B;
+}
+
+/* ===========================
+CHAT INPUT
+=========================== */
+
+[data-testid="stChatInput"]{
+    background:#1F2937;
+    border-radius:15px;
+    border:1px solid #374151;
+}
+
+[data-testid="stChatInput"] textarea{
+    background:#1F2937 !important;
+    color:white !important;
+}
+
+[data-testid="stChatInput"] button{
+    background:#16A34A !important;
+}
+
+/* ===========================
+INFO BOX
+=========================== */
+
+.stAlert{
+    border-radius:10px;
+}
+
+/* ===========================
+TOGGLE
+=========================== */
+
+.stToggle label{
+    color:white;
+}
+
+/* ===========================
+HR
+=========================== */
+
+hr{
+    border-color:#374151;
+}
+
+/* ===========================
+SCROLLBAR
+=========================== */
+
+::-webkit-scrollbar{
+    width:8px;
+}
+
+::-webkit-scrollbar-thumb{
+    background:#374151;
+    border-radius:20px;
+}
+
+/* ===========================
+ANIMATION
+=========================== */
+
+*{
+    transition:.25s;
+}
