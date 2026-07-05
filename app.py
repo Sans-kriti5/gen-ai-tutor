@@ -23,7 +23,7 @@ if "messages" not in st.session_state:
 if "theme" not in st.session_state:
     st.session_state.theme = "dark"
 
-# Load CSS according to current theme
+# Load the CSS once
 load_css(st.session_state.theme)
 
 # ---------------------------------
@@ -58,20 +58,19 @@ with st.sidebar:
         value=(st.session_state.theme == "light")
     )
 
-    if light_mode:
-        st.session_state.theme = "light"
-    else:
-        st.session_state.theme = "dark"
+    # Determine the selected theme
+    new_theme = "light" if light_mode else "dark"
 
-    # Reload CSS after changing theme
-    load_css(st.session_state.theme)
+    # Only rerun if the theme changed
+    if new_theme != st.session_state.theme:
+        st.session_state.theme = new_theme
+        st.rerun()
 
     st.markdown("---")
 
     if st.button("🗑 Clear Conversation"):
 
         st.session_state.messages = []
-
         st.rerun()
 
     st.markdown("---")
@@ -95,13 +94,14 @@ st.markdown("---")
 if len(st.session_state.messages) == 0:
 
     with st.chat_message("assistant"):
+
         st.markdown(
             """
 Hello 👋
 
 I'm your **AI Academic Tutor**.
 
-I can answer questions from your uploaded Computer Network PDF.
+I can answer questions from your uploaded **Computer Network PDF**.
 
 ### 💡 Try asking:
 
@@ -127,7 +127,9 @@ for message in st.session_state.messages:
 # Chat Input
 # ---------------------------------
 
-question = st.chat_input("Ask anything about Computer Networks...")
+question = st.chat_input(
+    "Ask anything about Computer Networks..."
+)
 
 if question:
 
@@ -154,7 +156,7 @@ if question:
 
         st.markdown(answer)
 
-    # Save AI Message
+    # Save AI Response
 
     st.session_state.messages.append(
         {
