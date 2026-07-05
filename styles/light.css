@@ -1,10 +1,20 @@
-/* ===========================
-GENERAL
-=========================== */
+/* ==========================================
+   GENERAL
+========================================== */
 
 .stApp{
     background:#FFFFFF;
     color:#111827;
+}
+
+.main,
+.block-container{
+    background:#FFFFFF;
+}
+
+header[data-testid="stHeader"]{
+    background:#FFFFFF;
+    border-bottom:1px solid #E5E7EB;
 }
 
 section[data-testid="stSidebar"]{
@@ -12,37 +22,51 @@ section[data-testid="stSidebar"]{
     border-right:1px solid #E5E7EB;
 }
 
+section[data-testid="stSidebar"] *{
+    color:#111827 !important;
+}
+
+/* ==========================================
+   TEXT
+========================================== */
+
 h1,h2,h3,h4,h5,h6,
-p,label,span{
+p,
+span,
+label,
+div,
+li,
+strong{
     color:#111827;
 }
 
-/* ===========================
-BUTTONS
-=========================== */
+/* ==========================================
+   BUTTONS
+========================================== */
 
 .stButton>button{
     width:100%;
     background:#16A34A;
     color:white;
     border:none;
-    border-radius:10px;
+    border-radius:12px;
     padding:10px;
-    transition:.3s;
+    font-weight:600;
+    transition:.25s;
 }
 
 .stButton>button:hover{
     background:#15803D;
 }
 
-/* ===========================
-CHAT MESSAGE
-=========================== */
+/* ==========================================
+   CHAT MESSAGE
+========================================== */
 
 [data-testid="stChatMessage"]{
-    border-radius:15px;
-    padding:15px;
-    margin-bottom:15px;
+    border-radius:16px;
+    padding:18px;
+    margin-bottom:18px;
 }
 
 [data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-user"]){
@@ -55,55 +79,52 @@ CHAT MESSAGE
     border-left:5px solid #64748B;
 }
 
-/* ===========================
-CHAT INPUT
-=========================== */
+/* ==========================================
+   CHAT INPUT
+========================================== */
+
+section[data-testid="stBottomBlockContainer"]{
+    background:#FFFFFF;
+}
 
 [data-testid="stChatInput"]{
-    background:white;
-    border-radius:15px;
+    background:#FFFFFF !important;
     border:1px solid #E5E7EB;
+    border-radius:15px;
 }
 
 [data-testid="stChatInput"] textarea{
-    background:white !important;
+    background:#FFFFFF !important;
     color:#111827 !important;
+}
+
+[data-testid="stChatInput"] textarea::placeholder{
+    color:#6B7280 !important;
 }
 
 [data-testid="stChatInput"] button{
     background:#16A34A !important;
 }
 
-/* ===========================
-INFO BOX
-=========================== */
+/* ==========================================
+   INFO BOX
+========================================== */
 
 .stAlert{
-    border-radius:10px;
+    border-radius:12px;
 }
 
-/* ===========================
-TOGGLE
-=========================== */
+/* ==========================================
+   TOGGLE
+========================================== */
 
 .stToggle label{
     color:#111827;
 }
-.stApp {
-    background-color: #FFFFFF;
-    color: #111827;
-}
-/* ===========================
-HR
-=========================== */
 
-hr{
-    border-color:#E5E7EB;
-}
-
-/* ===========================
-SCROLLBAR
-=========================== */
+/* ==========================================
+   SCROLLBAR
+========================================== */
 
 ::-webkit-scrollbar{
     width:8px;
@@ -114,10 +135,13 @@ SCROLLBAR
     border-radius:20px;
 }
 
-/* ===========================
-ANIMATION
-=========================== */
+/* ==========================================
+   ANIMATION
+========================================== */
 
 *{
-    transition:.25s;
+    transition:
+        background-color .25s,
+        color .25s,
+        border-color .25s;
 }
