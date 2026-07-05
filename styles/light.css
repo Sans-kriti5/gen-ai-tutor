@@ -96,7 +96,7 @@ CHAT INPUT
 }
 
 [data-testid="stChatInput"]{
-    background:#c6c6c6 !important;
+    background:#f6f6f6 !important;
     border:1px solid #E5E7EB;
     border-radius:15px;
 }
