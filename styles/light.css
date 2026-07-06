@@ -1,264 +1,173 @@
-/* ==========================================================
-   AI Academic Tutor - Light Theme
-   ========================================================== */
-
-/* -------------------------
-   Main App
--------------------------- */
+/* ==========================================
+   GENERAL
+========================================== */
 
 .stApp {
-    background: #F7F9FC;
-    color: #1F2937;
+    background-color: #FFFFFF;
+    color: #111827;
 }
 
-/* Main content area */
-.main .block-container {
-    background: #FFFFFF;
-    border-radius: 18px;
-    padding: 2.5rem;
-    margin-top: 1rem;
-}
-
-/* -------------------------
-   Sidebar
--------------------------- */
+/* ==========================================
+   SIDEBAR
+========================================== */
 
 section[data-testid="stSidebar"] {
-    background: #FFFFFF;
-    border-right: 1px solid #E5E7EB;
+    background-color: #F8FAFC;
+    border-right: 1px solid #D1D5DB;
 }
 
-section[data-testid="stSidebar"] .block-container {
-    padding-top: 2rem;
-}
+/* ==========================================
+   TEXT
+========================================== */
 
-/* -------------------------
-   Text
--------------------------- */
-
+html,
+body,
 h1, h2, h3, h4, h5, h6,
-p,
-span,
-label,
-div {
-    color: #1F2937;
+p, span, div, label {
+    color: #111827;
 }
 
-/* -------------------------
-   Horizontal Line
--------------------------- */
-
-hr {
-    border: none;
-    border-top: 1px solid #E5E7EB;
-    margin: 20px 0;
-}
-
-/* -------------------------
-   Success / Info Boxes
--------------------------- */
-
-.stAlert {
-    border-radius: 14px;
-}
-
-/* Success */
-
-[data-testid="stAlert"] {
-    border-radius: 14px;
-}
-
-/* -------------------------
-   Buttons
--------------------------- */
+/* ==========================================
+   BUTTONS
+========================================== */
 
 .stButton > button {
-
     width: 100%;
-
     background: #16A34A;
-
     color: white;
-
     border: none;
-
-    border-radius: 12px;
-
-    padding: 12px;
-
-    font-size: 15px;
-
-    font-weight: 600;
-
-    transition: .25s;
+    border-radius: 10px;
+    padding: 10px;
+    transition: 0.25s;
 }
 
 .stButton > button:hover {
-
     background: #15803D;
-
-    transform: translateY(-1px);
 }
 
-/* -------------------------
-   Chat Messages
--------------------------- */
+/* ==========================================
+   SUCCESS / INFO BOXES
+========================================== */
+
+.stAlert {
+    border-radius: 10px;
+}
+
+/* ==========================================
+   CHAT MESSAGE
+========================================== */
 
 [data-testid="stChatMessage"] {
-
-    background: white;
-
-    border: 1px solid #E5E7EB;
-
-    border-radius: 18px;
-
-    padding: 18px;
-
-    margin-bottom: 18px;
-
-    box-shadow: 0 3px 10px rgba(0,0,0,.05);
+    border-radius: 15px;
+    padding: 16px;
+    margin-bottom: 15px;
 }
 
 /* Assistant */
 
 [data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-assistant"]) {
-
-    border-left: 5px solid #F59E0B;
+    background: #F3F4F6;
+    border-left: 5px solid #94A3B8;
 }
 
 /* User */
 
 [data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-user"]) {
-
+    background: #DCFCE7;
     border-left: 5px solid #22C55E;
 }
 
-/* -------------------------
-   Chat Input
--------------------------- */
-
-/* Entire bottom container */
+/* ==========================================
+   CHAT INPUT AREA
+========================================== */
 
 [data-testid="stChatInput"] {
-
-    background: transparent !important;
-
-    border: none !important;
-
-    padding-top: 12px;
-}
-
-/* Actual input box */
-
-[data-testid="stChatInput"] > div {
-
-    background: #FFFFFF !important;
-
+    background: #F8FAFC !important;
     border: 1px solid #D1D5DB !important;
-
-    border-radius: 20px !important;
-
-    box-shadow: 0 6px 20px rgba(0,0,0,.08);
-
-    padding: 8px 12px;
+    border-radius: 15px;
 }
 
-/* Text area */
+/* Text box */
 
 [data-testid="stChatInput"] textarea {
-
-    background: transparent !important;
-
+    background: #FFFFFF !important;
     color: #111827 !important;
-
-    font-size: 16px;
-
-    border: none !important;
 }
 
-/* Placeholder */
-
-[data-testid="stChatInput"] textarea::placeholder {
-
-    color: #9CA3AF !important;
-}
-
-/* Send Button */
+/* Send button */
 
 [data-testid="stChatInput"] button {
-
     background: #16A34A !important;
-
     color: white !important;
-
-    border-radius: 12px !important;
-
-    border: none !important;
 }
 
-[data-testid="stChatInput"] button:hover {
+/* ==========================================
+   LOWER CHAT CONTAINER
+   (Fixes dark strip in light mode)
+========================================== */
 
-    background: #15803D !important;
+[data-testid="stBottom"] {
+    background: #FFFFFF !important;
 }
 
-/* -------------------------
-   Toggle
--------------------------- */
+[data-testid="stChatInputContainer"] {
+    background: #FFFFFF !important;
+    border-top: 1px solid #E5E7EB;
+}
+
+/* ==========================================
+   MAIN BLOCK CONTAINER
+========================================== */
+
+.main .block-container {
+    background: #FFFFFF;
+}
+
+/* ==========================================
+   TOGGLE
+========================================== */
 
 .stToggle label {
-
-    color: #1F2937;
+    color: #111827 !important;
 }
 
-/* -------------------------
-   Sidebar Cards
--------------------------- */
+/* ==========================================
+   HORIZONTAL LINE
+========================================== */
 
-.stSidebar .stSuccess,
-.stSidebar .stInfo {
-
-    border-radius: 14px;
-
-    border: none;
-
-    box-shadow: 0 2px 8px rgba(0,0,0,.05);
+hr {
+    border-color: #E5E7EB;
 }
 
-/* -------------------------
-   Scrollbar
--------------------------- */
+/* ==========================================
+   SCROLLBAR
+========================================== */
 
 ::-webkit-scrollbar {
-
     width: 8px;
 }
 
 ::-webkit-scrollbar-thumb {
-
     background: #D1D5DB;
-
-    border-radius: 30px;
+    border-radius: 20px;
 }
 
-/* -------------------------
-   Inputs
--------------------------- */
+/* ==========================================
+   INPUTS
+========================================== */
 
 input,
 textarea {
-
-    color: #111827;
+    color: #111827 !important;
 }
 
-/* -------------------------
-   Animation
--------------------------- */
+/* ==========================================
+   SMOOTH ANIMATION
+========================================== */
 
 * {
-
     transition:
-        background .25s,
-        color .25s,
-        border-color .25s,
-        box-shadow .25s;
+        background-color .25s ease,
+        color .25s ease,
+        border-color .25s ease;
 }
