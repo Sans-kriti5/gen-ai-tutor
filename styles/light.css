@@ -1,159 +1,264 @@
-/* ==========================
-ROOT
-========================== */
+/* ==========================================================
+   AI Academic Tutor - Light Theme
+   ========================================================== */
 
-html,
-body,
-.stApp,
-[data-testid="stAppViewContainer"],
-[data-testid="stAppViewContainer"]>.main,
-.main,
-.block-container{
-    background:#FFFFFF !important;
-    color:#111827 !important;
+/* -------------------------
+   Main App
+-------------------------- */
+
+.stApp {
+    background: #F7F9FC;
+    color: #1F2937;
 }
 
-
-/* ==========================
-HEADER
-========================== */
-
-header,
-[data-testid="stHeader"]{
-    background:#FFFFFF !important;
+/* Main content area */
+.main .block-container {
+    background: #FFFFFF;
+    border-radius: 18px;
+    padding: 2.5rem;
+    margin-top: 1rem;
 }
 
+/* -------------------------
+   Sidebar
+-------------------------- */
 
-/* ==========================
-SIDEBAR
-========================== */
-
-[data-testid="stSidebar"]{
-    background:#F8FAFC !important;
-    border-right:1px solid #E5E7EB;
+section[data-testid="stSidebar"] {
+    background: #FFFFFF;
+    border-right: 1px solid #E5E7EB;
 }
 
+section[data-testid="stSidebar"] .block-container {
+    padding-top: 2rem;
+}
 
-/* ==========================
-TEXT
-========================== */
+/* -------------------------
+   Text
+-------------------------- */
 
-h1,h2,h3,h4,h5,h6,
+h1, h2, h3, h4, h5, h6,
 p,
 span,
 label,
-div{
-    color:#111827;
+div {
+    color: #1F2937;
 }
 
+/* -------------------------
+   Horizontal Line
+-------------------------- */
 
-/* ==========================
-BUTTONS
-========================== */
-
-.stButton>button{
-    width:100%;
-    background:#16A34A;
-    color:white;
-    border:none;
-    border-radius:10px;
-    padding:10px;
-    transition:.25s;
+hr {
+    border: none;
+    border-top: 1px solid #E5E7EB;
+    margin: 20px 0;
 }
 
-.stButton>button:hover{
-    background:#15803D;
+/* -------------------------
+   Success / Info Boxes
+-------------------------- */
+
+.stAlert {
+    border-radius: 14px;
 }
 
+/* Success */
 
-/* ==========================
-CHAT
-========================== */
-
-[data-testid="stChatMessage"]{
-    border-radius:15px;
-    padding:15px;
-    margin-bottom:15px;
+[data-testid="stAlert"] {
+    border-radius: 14px;
 }
 
-[data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-user"]){
-    background:#DCFCE7;
-    border-left:5px solid #22C55E;
+/* -------------------------
+   Buttons
+-------------------------- */
+
+.stButton > button {
+
+    width: 100%;
+
+    background: #16A34A;
+
+    color: white;
+
+    border: none;
+
+    border-radius: 12px;
+
+    padding: 12px;
+
+    font-size: 15px;
+
+    font-weight: 600;
+
+    transition: .25s;
 }
 
-[data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-assistant"]){
-    background:#F3F4F6;
-    border-left:5px solid #64748B;
+.stButton > button:hover {
+
+    background: #15803D;
+
+    transform: translateY(-1px);
 }
 
+/* -------------------------
+   Chat Messages
+-------------------------- */
 
-/* ==========================
-CHAT INPUT
-========================== */
+[data-testid="stChatMessage"] {
 
-[data-testid="stBottomBlockContainer"]{
-    background:#c6c6c6 !important;
+    background: white;
+
+    border: 1px solid #E5E7EB;
+
+    border-radius: 18px;
+
+    padding: 18px;
+
+    margin-bottom: 18px;
+
+    box-shadow: 0 3px 10px rgba(0,0,0,.05);
 }
 
-[data-testid="stChatInput"]{
-    background:#f6f6f6 !important;
-    border:1px solid #E5E7EB;
-    border-radius:15px;
+/* Assistant */
+
+[data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-assistant"]) {
+
+    border-left: 5px solid #F59E0B;
 }
 
-[data-testid="stChatInput"]>div{
-    background:#c6c6c6 !important;
+/* User */
+
+[data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-user"]) {
+
+    border-left: 5px solid #22C55E;
 }
 
-[data-testid="stChatInput"] textarea{
-    background:#c6c6c6 !important;
-    color:#111827 !important;
+/* -------------------------
+   Chat Input
+-------------------------- */
+
+/* Entire bottom container */
+
+[data-testid="stChatInput"] {
+
+    background: transparent !important;
+
+    border: none !important;
+
+    padding-top: 12px;
 }
 
-[data-testid="stChatInput"] button{
-    background:#16A34A !important;
+/* Actual input box */
+
+[data-testid="stChatInput"] > div {
+
+    background: #FFFFFF !important;
+
+    border: 1px solid #D1D5DB !important;
+
+    border-radius: 20px !important;
+
+    box-shadow: 0 6px 20px rgba(0,0,0,.08);
+
+    padding: 8px 12px;
 }
 
+/* Text area */
 
-/* ==========================
-INFO BOX
-========================== */
+[data-testid="stChatInput"] textarea {
 
-.stAlert{
-    border-radius:10px;
+    background: transparent !important;
+
+    color: #111827 !important;
+
+    font-size: 16px;
+
+    border: none !important;
 }
 
+/* Placeholder */
 
-/* ==========================
-HR
-========================== */
+[data-testid="stChatInput"] textarea::placeholder {
 
-hr{
-    border-color:#E5E7EB;
+    color: #9CA3AF !important;
 }
 
+/* Send Button */
 
-/* ==========================
-SCROLLBAR
-========================== */
+[data-testid="stChatInput"] button {
 
-::-webkit-scrollbar{
-    width:8px;
+    background: #16A34A !important;
+
+    color: white !important;
+
+    border-radius: 12px !important;
+
+    border: none !important;
 }
 
-::-webkit-scrollbar-thumb{
-    background:#D1D5DB;
-    border-radius:20px;
+[data-testid="stChatInput"] button:hover {
+
+    background: #15803D !important;
 }
 
+/* -------------------------
+   Toggle
+-------------------------- */
 
-/* ==========================
-ANIMATION
-========================== */
+.stToggle label {
 
-*{
+    color: #1F2937;
+}
+
+/* -------------------------
+   Sidebar Cards
+-------------------------- */
+
+.stSidebar .stSuccess,
+.stSidebar .stInfo {
+
+    border-radius: 14px;
+
+    border: none;
+
+    box-shadow: 0 2px 8px rgba(0,0,0,.05);
+}
+
+/* -------------------------
+   Scrollbar
+-------------------------- */
+
+::-webkit-scrollbar {
+
+    width: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+
+    background: #D1D5DB;
+
+    border-radius: 30px;
+}
+
+/* -------------------------
+   Inputs
+-------------------------- */
+
+input,
+textarea {
+
+    color: #111827;
+}
+
+/* -------------------------
+   Animation
+-------------------------- */
+
+* {
+
     transition:
-    background-color .25s,
-    color .25s,
-    border-color .25s;
+        background .25s,
+        color .25s,
+        border-color .25s,
+        box-shadow .25s;
 }

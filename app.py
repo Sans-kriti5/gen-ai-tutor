@@ -1,6 +1,5 @@
 import streamlit as st
 from rag import ask_gemini
-from prompt import NOTE_PROMPT
 from ui_helpers import load_css
 
 # ---------------------------------
@@ -23,7 +22,10 @@ if "messages" not in st.session_state:
 if "theme" not in st.session_state:
     st.session_state.theme = "dark"
 
-# Load the CSS once
+if "role" not in st.session_state:
+    st.session_state.role = "Teacher"
+
+# Load Theme
 load_css(st.session_state.theme)
 
 # ---------------------------------
@@ -51,6 +53,28 @@ with st.sidebar:
 
     st.markdown("---")
 
+    # -----------------------------
+    # AI Role Selection
+    # -----------------------------
+
+    st.markdown("### 🎭 AI Role")
+
+    st.session_state.role = st.selectbox(
+        "Choose Assistant Role",
+        [
+            "Teacher",
+            "Examiner",
+            "Study Coach",
+            "Subject Expert"
+        ]
+    )
+
+    st.markdown("---")
+
+    # -----------------------------
+    # Theme Toggle
+    # -----------------------------
+
     st.markdown("### 🌙 Theme")
 
     light_mode = st.toggle(
@@ -58,19 +82,22 @@ with st.sidebar:
         value=(st.session_state.theme == "light")
     )
 
-    # Determine the selected theme
     new_theme = "light" if light_mode else "dark"
 
-    # Only rerun if the theme changed
     if new_theme != st.session_state.theme:
         st.session_state.theme = new_theme
         st.rerun()
 
     st.markdown("---")
 
+    # -----------------------------
+    # Clear Chat
+    # -----------------------------
+
     if st.button("🗑 Clear Conversation"):
 
         st.session_state.messages = []
+
         st.rerun()
 
     st.markdown("---")
@@ -96,10 +123,10 @@ if len(st.session_state.messages) == 0:
     with st.chat_message("assistant"):
 
         st.markdown(
-            """
+            f"""
 Hello 👋
 
-I'm your **AI Academic Tutor**.
+I'm your **{st.session_state.role}** AI Tutor.
 
 I can answer questions from your uploaded **Computer Network PDF**.
 
@@ -110,6 +137,9 @@ I can answer questions from your uploaded **Computer Network PDF**.
 - Difference between Hub and Switch.
 - Explain OSI Model.
 - What is TCP/IP?
+
+Current Role:
+**{st.session_state.role}**
 """
         )
 
@@ -146,17 +176,20 @@ if question:
 
         st.markdown(question)
 
-    # AI Response
+    # Assistant Response
 
     with st.chat_message("assistant"):
 
         with st.spinner("Thinking..."):
 
-            answer = ask_gemini(question)
+            answer = ask_gemini(
+                question,
+                st.session_state.role
+            )
 
         st.markdown(answer)
 
-    # Save AI Response
+    # Save Assistant Response
 
     st.session_state.messages.append(
         {
