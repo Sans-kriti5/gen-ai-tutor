@@ -12,7 +12,13 @@ from langchain_community.vectorstores import FAISS
 
 from roles import ROLES
 from examples import FEW_SHOT_EXAMPLES
-from prompt import COT_PROMPT
+from prompt import (
+    COT_PROMPT,
+    NOTE_PROMPT,
+    SUMMARY_PROMPT,
+    QUIZ_PROMPT,
+    STUDY_PLAN_PROMPT
+)
 
 # -------------------------------------------------------
 # Load Environment Variables
@@ -100,12 +106,31 @@ def load_vector_database():
 
 
 # -------------------------------------------------------
+# Cached Vector Database Load (For Streamlit performance)
+# -------------------------------------------------------
+
+def load_cached_vector_db(file_name):
+    """
+    Caches the FAISS index database using Streamlit's cache_resource
+    to avoid reading from disk on every rerun. Has fallback for scripts.
+    """
+    try:
+        import streamlit as st
+        @st.cache_resource
+        def _load(name):
+            return load_vector_database()
+        return _load(file_name)
+    except Exception:
+        return load_vector_database()
+
+
+# -------------------------------------------------------
 # Retrieve Documents
 # -------------------------------------------------------
 
-def retrieve_documents(question, k=3):
+def retrieve_documents(question, file_name="computer_network.pdf", k=3):
 
-    vector_db = load_vector_database()
+    vector_db = load_cached_vector_db(file_name)
 
     return vector_db.similarity_search(
         question,
@@ -114,12 +139,12 @@ def retrieve_documents(question, k=3):
 
 
 # -------------------------------------------------------
-# Ask Gemini (RAG)
+# Ask Gemini (RAG with Memory)
 # -------------------------------------------------------
 
-def ask_gemini(question, role="Teacher"):
+def ask_gemini(question, role="Teacher", history=[], file_name="computer_network.pdf"):
 
-    documents = retrieve_documents(question)
+    documents = retrieve_documents(question, file_name=file_name)
 
     context = "\n\n".join(
         doc.page_content
@@ -141,6 +166,23 @@ def ask_gemini(question, role="Teacher"):
         question=question
     )
 
+    # Format history if present
+    history_str = ""
+    if history:
+        history_str = "\n".join(
+            f"{'User' if msg['role'] == 'user' else 'Assistant'}: {msg['content']}"
+            for msg in history
+        )
+        history_section = f"""
+--------------------------------------------------
+
+Here is the conversation history so far:
+
+{history_str}
+"""
+    else:
+        history_section = ""
+
     prompt = f"""
 {role_prompt}
 
@@ -149,7 +191,7 @@ def ask_gemini(question, role="Teacher"):
 Below are examples of how answers should be structured.
 
 {FEW_SHOT_EXAMPLES}
-
+{history_section}
 --------------------------------------------------
 
 Now answer the user's question.
@@ -191,6 +233,42 @@ def generate_content(prompt):
 
     response = llm.invoke(prompt)
 
+    return response.content
+
+
+# -------------------------------------------------------
+# Study Tools Content Generator
+# -------------------------------------------------------
+
+def generate_study_tool_content(topic, mode="notes", file_name="computer_network.pdf"):
+    """
+    Retrieves documents relevant to the topic, formats them with the specified study tool prompt,
+    and returns the model's response.
+    Modes: "notes", "summary", "quiz", "study_plan"
+    """
+    documents = retrieve_documents(topic, file_name=file_name)
+    context = "\n\n".join(doc.page_content for doc in documents)
+    
+    if not context.strip():
+        return "I couldn't find enough information in the document to generate content for this topic."
+        
+    llm = ChatGoogleGenerativeAI(
+        model="gemini-2.5-flash",
+        temperature=0.4
+    )
+    
+    if mode == "notes":
+        prompt = NOTE_PROMPT.format(context=context)
+    elif mode == "summary":
+        prompt = SUMMARY_PROMPT.format(context=context)
+    elif mode == "quiz":
+        prompt = QUIZ_PROMPT.format(context=context)
+    elif mode == "study_plan":
+        prompt = STUDY_PLAN_PROMPT.format(context=context)
+    else:
+        return "Invalid study tool mode."
+        
+    response = llm.invoke(prompt)
     return response.content
 
 
