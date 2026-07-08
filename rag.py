@@ -71,8 +71,11 @@ def split_text(text):
 # -------------------------------------------------------
 # Create Vector Database
 # -------------------------------------------------------
+# -------------------------------------------------------
+# Create Vector Database
+# -------------------------------------------------------
 
-def create_vector_database(chunks):
+def create_vector_database(chunks, db_path):
 
     embeddings = GoogleGenerativeAIEmbeddings(
         model=EMBEDDING_MODEL
@@ -83,46 +86,54 @@ def create_vector_database(chunks):
         embedding=embeddings
     )
 
-    vector_db.save_local("vector_db")
+    os.makedirs(db_path, exist_ok=True)
+
+    vector_db.save_local(db_path)
 
     return vector_db
-
 
 # -------------------------------------------------------
 # Load Vector Database
 # -------------------------------------------------------
 
-def load_vector_database():
+def load_vector_database(file_name):
+
+    pdf_name = os.path.splitext(file_name)[0]
+
+    db_path = os.path.join(
+        "vector_db",
+        pdf_name
+    )
 
     embeddings = GoogleGenerativeAIEmbeddings(
         model=EMBEDDING_MODEL
     )
 
     return FAISS.load_local(
-        "vector_db",
+        db_path,
         embeddings,
         allow_dangerous_deserialization=True
     )
-
-
 # -------------------------------------------------------
 # Cached Vector Database Load (For Streamlit performance)
 # -------------------------------------------------------
 
 def load_cached_vector_db(file_name):
-    """
-    Caches the FAISS index database using Streamlit's cache_resource
-    to avoid reading from disk on every rerun. Has fallback for scripts.
-    """
+
     try:
+
         import streamlit as st
+
         @st.cache_resource
         def _load(name):
-            return load_vector_database()
-        return _load(file_name)
-    except Exception:
-        return load_vector_database()
 
+            return load_vector_database(name)
+
+        return _load(file_name)
+
+    except Exception:
+
+        return load_vector_database(file_name)
 
 # -------------------------------------------------------
 # Retrieve Documents
@@ -310,11 +321,35 @@ def generate_study_tool_content(topic, mode="notes", file_name="computer_network
 
 def build_rag(pdf_path):
 
+    pdf_name = os.path.splitext(
+        os.path.basename(pdf_path)
+    )[0]
+
+    db_path = os.path.join(
+        "vector_db",
+        pdf_name
+    )
+
+    # If already indexed, don't create embeddings again
+    if os.path.exists(
+        os.path.join(db_path, "index.faiss")
+    ):
+        print(f"{pdf_name} already indexed.")
+
+        return True
+
+    print(f"Creating vector database for {pdf_name}...")
+
     text = load_pdf(pdf_path)
 
     chunks = split_text(text)
 
-    create_vector_database(chunks)
+    create_vector_database(
+        chunks,
+        db_path
+    )
+
+    print("Done.")
 
     return True
 
