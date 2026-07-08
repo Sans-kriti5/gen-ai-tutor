@@ -6,7 +6,7 @@ from pypdf import PdfReader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_google_genai import (
     GoogleGenerativeAIEmbeddings,
-    ChatGoogleGenerativeAI
+    ChatGoogleGenerativeAI,
 )
 from langchain_community.vectorstores import FAISS
 
@@ -17,28 +17,30 @@ from prompt import (
     NOTE_PROMPT,
     SUMMARY_PROMPT,
     QUIZ_PROMPT,
-    STUDY_PLAN_PROMPT
+    STUDY_PLAN_PROMPT,
 )
 
 # -------------------------------------------------------
-# Load Environment Variables
+# Environment
 # -------------------------------------------------------
 
 load_dotenv()
 
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
-# -------------------------------------------------------
-# Embedding Model
-# -------------------------------------------------------
-
 EMBEDDING_MODEL = "models/gemini-embedding-001"
 
+VECTOR_DB_DIR = "vector_db"
+
+
 # -------------------------------------------------------
-# Read PDF
+# PDF Reader
 # -------------------------------------------------------
 
 def load_pdf(pdf_path):
+    """
+    Read all text from a PDF.
+    """
 
     reader = PdfReader(pdf_path)
 
@@ -59,6 +61,9 @@ def load_pdf(pdf_path):
 # -------------------------------------------------------
 
 def split_text(text):
+    """
+    Split PDF into overlapping chunks.
+    """
 
     splitter = RecursiveCharacterTextSplitter(
         chunk_size=1000,
@@ -69,13 +74,38 @@ def split_text(text):
 
 
 # -------------------------------------------------------
-# Create Vector Database
+# Utility Functions
 # -------------------------------------------------------
+
+def get_vector_db_path(file_name):
+    """
+    Convert:
+
+        computer_network.pdf
+
+    into
+
+        vector_db/computer_network
+    """
+
+    pdf_name = os.path.splitext(
+        os.path.basename(file_name)
+    )[0]
+
+    return os.path.join(
+        VECTOR_DB_DIR,
+        pdf_name
+    )
+
+
 # -------------------------------------------------------
 # Create Vector Database
 # -------------------------------------------------------
 
-def create_vector_database(chunks, db_path):
+def create_vector_database(chunks, file_name):
+    """
+    Create FAISS index for one PDF.
+    """
 
     embeddings = GoogleGenerativeAIEmbeddings(
         model=EMBEDDING_MODEL
@@ -86,39 +116,46 @@ def create_vector_database(chunks, db_path):
         embedding=embeddings
     )
 
+    db_path = get_vector_db_path(file_name)
+
     os.makedirs(db_path, exist_ok=True)
 
     vector_db.save_local(db_path)
 
     return vector_db
 
+
 # -------------------------------------------------------
 # Load Vector Database
 # -------------------------------------------------------
 
 def load_vector_database(file_name):
-
-    pdf_name = os.path.splitext(file_name)[0]
-
-    db_path = os.path.join(
-        "vector_db",
-        pdf_name
-    )
+    """
+    Load the FAISS index of the selected PDF.
+    """
 
     embeddings = GoogleGenerativeAIEmbeddings(
         model=EMBEDDING_MODEL
     )
+
+    db_path = get_vector_db_path(file_name)
 
     return FAISS.load_local(
         db_path,
         embeddings,
         allow_dangerous_deserialization=True
     )
+
+
 # -------------------------------------------------------
-# Cached Vector Database Load (For Streamlit performance)
+# Cached Database Loader
 # -------------------------------------------------------
 
 def load_cached_vector_db(file_name):
+    """
+    Cache loaded FAISS databases so Streamlit
+    doesn't reload them on every rerun.
+    """
 
     try:
 
@@ -135,11 +172,19 @@ def load_cached_vector_db(file_name):
 
         return load_vector_database(file_name)
 
+
 # -------------------------------------------------------
 # Retrieve Documents
 # -------------------------------------------------------
 
-def retrieve_documents(question, file_name="computer_network.pdf", k=3):
+def retrieve_documents(
+    question,
+    file_name="computer_network.pdf",
+    k=3
+):
+    """
+    Retrieve the most relevant chunks.
+    """
 
     vector_db = load_cached_vector_db(file_name)
 
@@ -148,67 +193,123 @@ def retrieve_documents(question, file_name="computer_network.pdf", k=3):
         k=k
     )
 
-
 # -------------------------------------------------------
 # Ask Gemini (RAG with Memory)
 # -------------------------------------------------------
 
-def ask_gemini(question, role="Teacher", history=[], file_name="computer_network.pdf"):
+def ask_gemini(
+    question,
+    role="Teacher",
+    history=None,
+    file_name="computer_network.pdf"
+):
+    """
+    Main RAG Question Answering Function.
+    """
 
-    documents = retrieve_documents(question, file_name=file_name)
+    if history is None:
+        history = []
+
+    # -----------------------------
+    # Retrieve Context
+    # -----------------------------
+
+    documents = retrieve_documents(
+        question,
+        file_name=file_name
+    )
 
     context = "\n\n".join(
         doc.page_content
         for doc in documents
     )
 
+    # -----------------------------
+    # Load LLM
+    # -----------------------------
+
     llm = ChatGoogleGenerativeAI(
         model="gemini-2.5-flash",
         temperature=0.3
     )
 
-    from profile_manager import get_personalization_prompt, add_to_learning_history
-    
-    # Track in history
-    add_to_learning_history(question[:50], "Chat Q&A")
+    # -----------------------------
+    # User Profile
+    # -----------------------------
+
+    from profile_manager import (
+        get_personalization_prompt,
+        add_to_learning_history
+    )
+
+    add_to_learning_history(
+        question[:50],
+        "Chat Q&A"
+    )
 
     personalization = get_personalization_prompt()
-    role_prompt = personalization + ROLES.get(
-        role,
-        ROLES["Teacher"]
+
+    role_prompt = (
+        personalization
+        + ROLES.get(
+            role,
+            ROLES["Teacher"]
+        )
     )
 
-    cot_prompt = COT_PROMPT.format(
-        context=context,
-        question=question
-    )
+    # -----------------------------
+    # Conversation History
+    # -----------------------------
 
-    # Format history if present
-    history_str = ""
+    history_section = ""
+
     if history:
-        history_str = "\n".join(
-            f"{'User' if msg['role'] == 'user' else 'Assistant'}: {msg['content']}"
+
+        history_text = "\n".join(
+
+            f"{'User' if msg['role']=='user' else 'Assistant'}: {msg['content']}"
+
             for msg in history
         )
+
         history_section = f"""
+
 --------------------------------------------------
 
-Here is the conversation history so far:
+Conversation History
 
-{history_str}
+{history_text}
+
 """
-    else:
-        history_section = ""
+
+    # -----------------------------
+    # Chain of Thought Prompt
+    # -----------------------------
+
+    cot_prompt = COT_PROMPT.format(
+
+        context=context,
+
+        question=question
+
+    )
+
+    # -----------------------------
+    # Final Prompt
+    # -----------------------------
 
     prompt = f"""
+
 {role_prompt}
 
 --------------------------------------------------
 
-Below are examples of how answers should be structured.
+Below are examples of ideal answers.
 
 {FEW_SHOT_EXAMPLES}
+
 {history_section}
+
 --------------------------------------------------
 
 Now answer the user's question.
@@ -217,8 +318,10 @@ Now answer the user's question.
 
 Rules:
 
-- Answer ONLY using the provided context.
-- If the answer is unavailable, reply:
+• Use ONLY the provided context.
+
+• If the answer is unavailable, reply exactly:
+
 "I couldn't find that information in the provided document."
 
 Context:
@@ -230,88 +333,181 @@ Question:
 {question}
 
 Answer:
+
 """
 
+    # -----------------------------
+    # Call Gemini
+    # -----------------------------
+
     response = llm.invoke(prompt)
+
     content = response.content
+
     if isinstance(content, list):
-        text_parts = []
-        for part in content:
-            if isinstance(part, dict) and "text" in part:
-                text_parts.append(part["text"])
-            elif isinstance(part, str):
-                text_parts.append(part)
-        content = "".join(text_parts)
+
+        parts = []
+
+        for item in content:
+
+            if isinstance(item, dict):
+
+                if "text" in item:
+
+                    parts.append(item["text"])
+
+            elif isinstance(item, str):
+
+                parts.append(item)
+
+        content = "".join(parts)
+
     elif not isinstance(content, str):
+
         content = str(content)
 
-    # Parse Chain-of-Thought XML tags
+    # -----------------------------
+    # Parse XML Tags
+    # -----------------------------
+
     import re
-    reasoning_match = re.search(r'<reasoning_chain>(.*?)</reasoning_chain>', content, re.DOTALL)
-    answer_match = re.search(r'<answer>(.*?)</answer>', content, re.DOTALL)
-    
-    reasoning = reasoning_match.group(1).strip() if reasoning_match else ""
-    answer = answer_match.group(1).strip() if answer_match else content.strip()
-    
-    # Clean up tags if none matched but some exist
-    if not answer_match and not reasoning_match:
-        answer = re.sub(r'</?(reasoning_chain|answer)>', '', answer).strip()
-        
+
+    reasoning_match = re.search(
+
+        r"<reasoning_chain>(.*?)</reasoning_chain>",
+
+        content,
+
+        re.DOTALL
+
+    )
+
+    answer_match = re.search(
+
+        r"<answer>(.*?)</answer>",
+
+        content,
+
+        re.DOTALL
+
+    )
+
+    reasoning = ""
+
+    answer = content.strip()
+
+    if reasoning_match:
+
+        reasoning = reasoning_match.group(1).strip()
+
+    if answer_match:
+
+        answer = answer_match.group(1).strip()
+
+    if not answer_match:
+
+        answer = re.sub(
+
+            r"</?(reasoning_chain|answer)>",
+
+            "",
+
+            answer
+
+        ).strip()
+
     return {
+
         "reasoning": reasoning,
+
         "answer": answer
+
     }
 
 
 # -------------------------------------------------------
-# Direct Gemini Call
+# Direct Gemini Prompt
 # -------------------------------------------------------
 
 def generate_content(prompt):
 
     llm = ChatGoogleGenerativeAI(
+
         model="gemini-2.5-flash",
+
         temperature=0.3
+
     )
 
     response = llm.invoke(prompt)
 
     return response.content
-
-
 # -------------------------------------------------------
 # Study Tools Content Generator
 # -------------------------------------------------------
 
-def generate_study_tool_content(topic, mode="notes", file_name="computer_network.pdf"):
+def generate_study_tool_content(
+    topic,
+    mode="notes",
+    file_name="computer_network.pdf"
+):
     """
-    Retrieves documents relevant to the topic, formats them with the specified study tool prompt,
-    and returns the model's response.
-    Modes: "notes", "summary", "quiz", "study_plan"
+    Generate revision notes, summaries, quizzes,
+    or study plans using the indexed PDF.
     """
-    documents = retrieve_documents(topic, file_name=file_name)
-    context = "\n\n".join(doc.page_content for doc in documents)
-    
+
+    documents = retrieve_documents(
+        topic,
+        file_name=file_name
+    )
+
+    context = "\n\n".join(
+        doc.page_content
+        for doc in documents
+    )
+
     if not context.strip():
-        return "I couldn't find enough information in the document to generate content for this topic."
-        
+
+        return (
+            "I couldn't find enough information "
+            "in the document."
+        )
+
     llm = ChatGoogleGenerativeAI(
         model="gemini-2.5-flash",
         temperature=0.4
     )
-    
+
     if mode == "notes":
-        prompt = NOTE_PROMPT.format(context=context)
+
+        prompt = NOTE_PROMPT.format(
+            context=context
+        )
+
     elif mode == "summary":
-        prompt = SUMMARY_PROMPT.format(context=context)
+
+        prompt = SUMMARY_PROMPT.format(
+            context=context
+        )
+
     elif mode == "quiz":
-        prompt = QUIZ_PROMPT.format(context=context)
+
+        prompt = QUIZ_PROMPT.format(
+            context=context
+        )
+
     elif mode == "study_plan":
-        prompt = STUDY_PLAN_PROMPT.format(context=context)
+
+        prompt = STUDY_PLAN_PROMPT.format(
+            context=context
+        )
+
     else:
+
         return "Invalid study tool mode."
-        
+
     response = llm.invoke(prompt)
+
     return response.content
 
 
@@ -320,25 +516,33 @@ def generate_study_tool_content(topic, mode="notes", file_name="computer_network
 # -------------------------------------------------------
 
 def build_rag(pdf_path):
+    """
+    Build the vector database only if it
+    doesn't already exist.
+    """
 
-    pdf_name = os.path.splitext(
-        os.path.basename(pdf_path)
-    )[0]
+    pdf_name = os.path.basename(pdf_path)
 
-    db_path = os.path.join(
-        "vector_db",
-        pdf_name
+    db_path = get_vector_db_path(pdf_name)
+
+    faiss_file = os.path.join(
+        db_path,
+        "index.faiss"
     )
 
-    # If already indexed, don't create embeddings again
-    if os.path.exists(
-        os.path.join(db_path, "index.faiss")
-    ):
-        print(f"{pdf_name} already indexed.")
+    pkl_file = os.path.join(
+        db_path,
+        "index.pkl"
+    )
+
+    # Already Indexed
+    if os.path.exists(faiss_file) and os.path.exists(pkl_file):
+
+        print(f"✓ {pdf_name} already indexed.")
 
         return True
 
-    print(f"Creating vector database for {pdf_name}...")
+    print(f"\nCreating embeddings for {pdf_name}...")
 
     text = load_pdf(pdf_path)
 
@@ -346,12 +550,66 @@ def build_rag(pdf_path):
 
     create_vector_database(
         chunks,
-        db_path
+        pdf_name
     )
 
-    print("Done.")
+    print("✓ Vector database created.")
 
     return True
+
+
+# -------------------------------------------------------
+# Build Every PDF in data/
+# -------------------------------------------------------
+
+def build_all_documents():
+    """
+    Index every PDF inside the data folder.
+    Existing indexes are skipped.
+    """
+
+    data_folder = "data"
+
+    if not os.path.exists(data_folder):
+
+        print("Data folder not found.")
+
+        return
+
+    pdf_files = [
+
+        file
+
+        for file in os.listdir(data_folder)
+
+        if file.lower().endswith(".pdf")
+
+    ]
+
+    if not pdf_files:
+
+        print("No PDF files found.")
+
+        return
+
+    print("\nFound PDFs:")
+
+    for pdf in pdf_files:
+
+        print(" •", pdf)
+
+    print()
+
+    for pdf in pdf_files:
+
+        build_rag(
+
+            os.path.join(
+                data_folder,
+                pdf
+            )
+
+        )
 
 
 # -------------------------------------------------------
@@ -361,17 +619,13 @@ def build_rag(pdf_path):
 if __name__ == "__main__":
 
     print("=" * 60)
-    print(" AI Academic Tutor - RAG Builder ")
+    print(" AI Academic Tutor ")
     print("=" * 60)
 
-    pdf_path = "data/computer_network.pdf"
+    build_all_documents()
 
-    print("\nLoading PDF...")
+    print("\nEverything is ready!")
 
-    build_rag(pdf_path)
-
-    print("\n✓ Vector Database Created Successfully!")
-
-    print("\nRun:")
+    print("\nRun the application using:\n")
 
     print("streamlit run app.py")
