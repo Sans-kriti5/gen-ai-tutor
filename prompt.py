@@ -32,10 +32,9 @@ Answer:
 COT_PROMPT = """
 Use the provided context to answer the question.
 
-Before writing the final answer:
-1. Identify the main concept.
-2. Explain the important points in a logical order.
-3. Give the final explanation in simple language.
+You MUST structure your response into two distinct parts:
+1. Wrap your step-by-step thinking process (identifying key concepts, ordering points, logical deductions) inside <reasoning_chain>...</reasoning_chain> tags.
+2. Wrap your final, student-friendly explanation inside <answer>...</answer> tags.
 
 Context:
 {context}
@@ -43,7 +42,13 @@ Context:
 Question:
 {question}
 
-Final Answer:
+Format:
+<reasoning_chain>
+Step-by-step thinking goes here...
+</reasoning_chain>
+<answer>
+Final explanation goes here...
+</answer>
 """
 
 # =====================================================

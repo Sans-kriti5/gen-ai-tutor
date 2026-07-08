@@ -1,0 +1,27 @@
+{
+    "name": "Sanskriti (Test)",
+    "roll_number": "12",
+    "department": "Computer Engineering",
+    "learning_history": [
+        {
+            "timestamp": "2026-07-08 19:44:32",
+            "topic": "LAN vs WAN",
+            "activity_type": "Verification Test"
+        },
+        {
+            "timestamp": "2026-07-08 19:47:29",
+            "topic": "What is the primary function of a Switch?",
+            "activity_type": "Chat Q&A"
+        },
+        {
+            "timestamp": "2026-07-08 19:47:47",
+            "topic": "LAN vs WAN",
+            "activity_type": "Verification Test"
+        },
+        {
+            "timestamp": "2026-07-08 19:48:41",
+            "topic": "What is the primary function of a Switch?",
+            "activity_type": "Chat Q&A"
+        }
+    ]
+}

@@ -108,6 +108,36 @@ with st.sidebar:
     st.markdown("---")
 
     # -----------------------------
+    # Personal Profile & Learning History
+    # -----------------------------
+    from profile_manager import load_profile, save_profile
+    
+    user_profile = load_profile()
+    
+    st.markdown("### 🎓 Personal Profile")
+    profile_name = st.text_input("Name", value=user_profile.get("name", ""), placeholder="e.g. Sanskriti")
+    profile_roll = st.text_input("Roll Number", value=user_profile.get("roll_number", ""), placeholder="e.g. 12")
+    profile_dept = st.text_input("Department", value=user_profile.get("department", ""), placeholder="e.g. Computer Eng.")
+    
+    if st.button("💾 Save Profile"):
+        user_profile["name"] = profile_name
+        user_profile["roll_number"] = profile_roll
+        user_profile["department"] = profile_dept
+        save_profile(user_profile)
+        st.success("Profile updated!")
+        st.rerun()
+
+    if user_profile["learning_history"]:
+        st.markdown("### ⏳ Learning History")
+        # Display the last 5 activities
+        for entry in reversed(user_profile["learning_history"][-5:]):
+            st.caption(f"📅 {entry['timestamp']}")
+            st.markdown(f"**{entry['activity_type']}**: {entry['topic']}")
+            st.markdown("---")
+
+    st.markdown("---")
+
+    # -----------------------------
     # Theme Toggle
     # -----------------------------
 
@@ -151,12 +181,14 @@ st.caption("Ask questions and generate learning aids from your PDF using RAG + G
 st.markdown("---")
 
 # Create Tabs for different study features
-tab1, tab2, tab3, tab4, tab5 = st.tabs([
+tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
     "💬 Chat Q&A", 
     "📝 Revision Notes", 
     "⚡ Quick Quiz", 
     "📅 Study Planner", 
-    "📄 Summarizer"
+    "📄 Summarizer",
+    "🔗 Sequential Chain",
+    "🤖 Agent Assistant"
 ])
 
 with tab1:
@@ -166,9 +198,13 @@ with tab1:
     if len(st.session_state.messages) == 0:
         with st.chat_message("assistant"):
             current_doc = st.session_state.get('current_file', 'computer_network.pdf')
+            from profile_manager import load_profile
+            user_profile = load_profile()
+            student_name = user_profile.get("name", "").strip()
+            greeting_name = f" {student_name}" if student_name else ""
             st.markdown(
                 f"""
-Hello 👋
+Hello{greeting_name} 👋
 
 I'm your **{st.session_state.role}** AI Tutor.
 
@@ -191,6 +227,9 @@ Current Role:
     # ---------------------------------
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
+            if "reasoning" in message and message["reasoning"]:
+                with st.expander("🔍 Chain-of-Thought (Reasoning Steps)"):
+                    st.markdown(message["reasoning"])
             st.markdown(message["content"])
 
 with tab2:
@@ -261,6 +300,63 @@ with tab5:
         else:
             st.warning("Please enter a topic.")
 
+with tab6:
+    st.header("🔗 LangChain Sequential Chain Workflow")
+    st.write("Execute a modular sequential pipeline: **Topic → Detailed Explanation → Revision Notes → Practice Quiz**.")
+    st.info("The output of each step is passed as an input to the prompt for the next step.")
+    
+    seq_topic = st.text_input("Enter Topic for Sequential Study Flow:", placeholder="e.g. Subnetting", key="seq_topic_input")
+    if st.button("Run Sequential Study Chain 🚀", key="seq_btn"):
+        if seq_topic:
+            with st.spinner("Executing LangChain Sequential pipeline..."):
+                from study_chains import run_sequential_study_flow
+                from profile_manager import add_to_learning_history
+                
+                # Log in history
+                add_to_learning_history(seq_topic, "Sequential Chain")
+                
+                results = run_sequential_study_flow(
+                    seq_topic,
+                    file_name=st.session_state.get('current_file', 'computer_network.pdf')
+                )
+                
+                st.success("Workflow executed successfully!")
+                st.markdown("### 💡 Step 1: Detailed Concept Explanation")
+                st.markdown(results["explanation"])
+                st.markdown("---")
+                st.markdown("### 📝 Step 2: Generated Revision Notes")
+                st.markdown(results["notes"])
+                st.markdown("---")
+                st.markdown("### ⚡ Step 3: Conceptual Practice Quiz")
+                st.markdown(results["quiz"])
+        else:
+            st.warning("Please enter a topic.")
+
+with tab7:
+    st.header("🤖 LangChain Tool-Calling Agent")
+    st.write("Interact with an AI Agent that automatically selects utility tools (Calculator, Summarizer, Planner) to answer queries.")
+    
+    agent_query = st.text_area(
+        "Ask the agent a question:",
+        placeholder="e.g. 'Calculate 1500 * 8 / (10**6) seconds transmission delay' OR 'Create a 5-day plan to learn Routing Algorithms'",
+        key="agent_query_input"
+    )
+    
+    if st.button("Ask Agent 🧠", key="agent_btn"):
+        if agent_query:
+            with st.spinner("Agent is reasoning and selecting tools..."):
+                from agent_tools import run_agent_query
+                from profile_manager import add_to_learning_history
+                
+                # Log in history
+                add_to_learning_history(agent_query[:50], "Agent Q&A")
+                
+                agent_response = run_agent_query(agent_query)
+                st.markdown("### 🤖 Agent Response:")
+                st.markdown(agent_response)
+        else:
+            st.warning("Please enter a query.")
+
 # ---------------------------------
 # Chat Input (Always displayed at the bottom for Chat Q&A)
 # ---------------------------------
@@ -285,18 +381,25 @@ if question:
         # Assistant Response
         with st.chat_message("assistant"):
             with st.spinner("Thinking..."):
-                answer = ask_gemini(
+                response_dict = ask_gemini(
                     question,
                     st.session_state.role,
                     history=st.session_state.messages[:-1],
                     file_name=st.session_state.get('current_file', 'computer_network.pdf')
                 )
+                answer = response_dict["answer"]
+                reasoning = response_dict["reasoning"]
+                
+            if reasoning:
+                with st.expander("🔍 Chain-of-Thought (Reasoning Steps)"):
+                    st.markdown(reasoning)
             st.markdown(answer)
 
     # Save Assistant Response
     st.session_state.messages.append(
         {
             "role": "assistant",
-            "content": answer
+            "content": answer,
+            "reasoning": reasoning
         }
     )

@@ -156,7 +156,13 @@ def ask_gemini(question, role="Teacher", history=[], file_name="computer_network
         temperature=0.3
     )
 
-    role_prompt = ROLES.get(
+    from profile_manager import get_personalization_prompt, add_to_learning_history
+    
+    # Track in history
+    add_to_learning_history(question[:50], "Chat Q&A")
+
+    personalization = get_personalization_prompt()
+    role_prompt = personalization + ROLES.get(
         role,
         ROLES["Teacher"]
     )
@@ -216,8 +222,34 @@ Answer:
 """
 
     response = llm.invoke(prompt)
+    content = response.content
+    if isinstance(content, list):
+        text_parts = []
+        for part in content:
+            if isinstance(part, dict) and "text" in part:
+                text_parts.append(part["text"])
+            elif isinstance(part, str):
+                text_parts.append(part)
+        content = "".join(text_parts)
+    elif not isinstance(content, str):
+        content = str(content)
 
-    return response.content
+    # Parse Chain-of-Thought XML tags
+    import re
+    reasoning_match = re.search(r'<reasoning_chain>(.*?)</reasoning_chain>', content, re.DOTALL)
+    answer_match = re.search(r'<answer>(.*?)</answer>', content, re.DOTALL)
+    
+    reasoning = reasoning_match.group(1).strip() if reasoning_match else ""
+    answer = answer_match.group(1).strip() if answer_match else content.strip()
+    
+    # Clean up tags if none matched but some exist
+    if not answer_match and not reasoning_match:
+        answer = re.sub(r'</?(reasoning_chain|answer)>', '', answer).strip()
+        
+    return {
+        "reasoning": reasoning,
+        "answer": answer
+    }
 
 
 # -------------------------------------------------------
