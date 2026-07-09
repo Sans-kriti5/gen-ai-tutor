@@ -148,29 +148,41 @@ def load_vector_database(file_name):
 
 
 # -------------------------------------------------------
-# Cached Database Loader
+# Cached Database Loader  (module-level so cache is stable)
 # -------------------------------------------------------
 
-def load_cached_vector_db(file_name):
-    """
-    Cache loaded FAISS databases so Streamlit
-    doesn't reload them on every rerun.
-    """
+try:
+    import streamlit as st
 
-    try:
-
-        import streamlit as st
-
-        @st.cache_resource
-        def _load(name):
-
-            return load_vector_database(name)
-
-        return _load(file_name)
-
-    except Exception:
-
+    @st.cache_resource
+    def load_cached_vector_db(file_name: str):
+        """
+        Load FAISS index for *file_name* and cache it in Streamlit memory.
+        Cached independently per PDF — switching documents loads a different
+        index without rebuilding anything.
+        """
         return load_vector_database(file_name)
+
+except ModuleNotFoundError:
+    # Running outside Streamlit (e.g. CLI tests) — no cache
+    def load_cached_vector_db(file_name: str):
+        return load_vector_database(file_name)
+
+
+# -------------------------------------------------------
+# Index Existence Check
+# -------------------------------------------------------
+
+def is_indexed(file_name: str) -> bool:
+    """
+    Return True only when BOTH index.faiss and index.pkl
+    exist for the given PDF name.
+    """
+    db_path = get_vector_db_path(file_name)
+    return (
+        os.path.exists(os.path.join(db_path, "index.faiss"))
+        and os.path.exists(os.path.join(db_path, "index.pkl"))
+    )
 
 
 # -------------------------------------------------------

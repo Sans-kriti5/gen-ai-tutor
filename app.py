@@ -1,6 +1,6 @@
 import os
 import streamlit as st
-from rag import ask_gemini
+from rag import ask_gemini, build_rag, is_indexed
 from ui_helpers import load_css
 
 # ---------------------------------
@@ -48,46 +48,86 @@ with st.sidebar:
 
     st.markdown("---")
 
-    st.markdown("### 📄 Study Document")
+    st.markdown("### 📁 Document Manager")
 
+    DATA_DIR = "data"
+    os.makedirs(DATA_DIR, exist_ok=True)
+
+    # ---- List existing PDFs in data/ ----
+    existing_pdfs = sorted(
+        f for f in os.listdir(DATA_DIR)
+        if f.lower().endswith(".pdf")
+    )
+
+    if existing_pdfs:
+        st.markdown("**Available Documents:**")
+        for pdf_name in existing_pdfs:
+            indexed = is_indexed(pdf_name)
+            status = "🟢" if indexed else "🟡"
+            label = f"{status} {pdf_name}"
+
+            # Highlight active doc
+            is_active = st.session_state.get("current_file") == pdf_name
+            if st.button(
+                label + (" ← active" if is_active else ""),
+                key=f"switch_{pdf_name}",
+                use_container_width=True,
+                type="primary" if is_active else "secondary",
+            ):
+                if not is_active:
+                    # Index only if not yet done
+                    if not indexed:
+                        with st.spinner(f"Indexing {pdf_name}..."):
+                            build_rag(os.path.join(DATA_DIR, pdf_name))
+                    st.session_state.current_file = pdf_name
+                    st.session_state.messages = []
+                    st.rerun()
+
+        st.caption("🟢 indexed  ·  🟡 not yet indexed")
+    else:
+        st.info("No PDFs in data/ yet. Upload one below.")
+
+    st.markdown("**Upload a new PDF:**")
     uploaded_file = st.file_uploader(
-        "Upload a PDF",
+        "Choose PDF",
         type=["pdf"],
-        help="Upload a PDF study material to query."
+        label_visibility="collapsed",
+        help="PDF will be saved to data/ and indexed automatically.",
     )
 
     if uploaded_file is not None:
-        from rag import build_rag
-        
-        save_dir = "data"
-        os.makedirs(save_dir, exist_ok=True)
-        pdf_path = os.path.join(save_dir, uploaded_file.name)
-        
-        if "current_file" not in st.session_state or st.session_state.current_file != uploaded_file.name:
-            with st.spinner(f"Reading and indexing {uploaded_file.name}..."):
-                with open(pdf_path, "wb") as f:
-                    f.write(uploaded_file.getbuffer())
-                
-                build_rag(pdf_path)
-                st.session_state.current_file = uploaded_file.name
-                st.session_state.messages = []
-                st.success(f"Loaded {uploaded_file.name}!")
-                st.rerun()
-        
-        st.info(f"Active: {uploaded_file.name}")
-    else:
-        if "current_file" in st.session_state and st.session_state.current_file != "computer_network.pdf":
-            st.session_state.current_file = "computer_network.pdf"
-            st.session_state.messages = []
-            default_pdf = "data/computer_network.pdf"
-            if not os.path.exists("vector_db") and os.path.exists(default_pdf):
-                from rag import build_rag
-                with st.spinner("Building default index..."):
-                    build_rag(default_pdf)
-            st.rerun()
-        st.info("Active: computer_network.pdf")
+        pdf_path = os.path.join(DATA_DIR, uploaded_file.name)
 
+        # Save file if not already on disk
+        if not os.path.exists(pdf_path):
+            with open(pdf_path, "wb") as f:
+                f.write(uploaded_file.getbuffer())
+
+        # Index only if not already indexed
+        if not is_indexed(uploaded_file.name):
+            with st.spinner(f"Indexing {uploaded_file.name} — this only happens once..."):
+                build_rag(pdf_path)
+            st.success(f"Indexed {uploaded_file.name}!")
+
+        # Switch active document
+        if st.session_state.get("current_file") != uploaded_file.name:
+            st.session_state.current_file = uploaded_file.name
+            st.session_state.messages = []
+            st.rerun()
+
+    # Ensure a default document is always set
+    if "current_file" not in st.session_state or not st.session_state.current_file:
+        default = "computer_network.pdf"
+        default_path = os.path.join(DATA_DIR, default)
+        if os.path.exists(default_path) and not is_indexed(default):
+            with st.spinner("Indexing default document..."):
+                build_rag(default_path)
+        st.session_state.current_file = default
+
+    # Active doc badge
     st.markdown("---")
+    st.info(f"📄 Active: **{st.session_state.get('current_file', 'computer_network.pdf')}**")
+
 
     # -----------------------------
     # AI Role Selection
